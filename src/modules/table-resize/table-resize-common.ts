@@ -147,6 +147,16 @@ export class TableResizeCommon extends TableDomSelector {
         if (cols[this.colIndex + 1]) {
           const totalWidthNextPre = oldWidthPre + cols[this.colIndex + 1].width;
           pre = Math.min(totalWidthNextPre - tableUpSize.colMinWidthPre, pre);
+
+          const otherColsWidth = cols.reduce((sum, col, idx) =>
+            (idx !== this.colIndex && idx !== this.colIndex + 1) ? sum + col.width : sum, 0
+          );
+          const maxAllowedPre = Math.min(pre, 100 - tableUpSize.colMinWidthPre - otherColsWidth);
+
+          if (maxAllowedPre < pre) {
+            pre = maxAllowedPre;
+          }
+
           needUpdate = true;
           updateInfo.push(
             { index: this.colIndex, width: pre },
