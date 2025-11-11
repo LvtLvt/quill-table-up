@@ -2,7 +2,7 @@ import type Quill from 'quill';
 import type { TableColFormat, TableMainFormat, TableRowFormat } from '../../formats';
 import type { TableUp } from '../../table-up';
 import { getTableMainRect } from '../../formats';
-import { createBEM, createConfirmDialog, tableUpEvent, tableUpSize } from '../../utils';
+import { createBEM, tableUpEvent, tableUpSize } from '../../utils';
 import { TableDomSelector } from '../table-dom-selector';
 import { getColRect, isTableAlignRight } from './utils';
 
@@ -109,7 +109,7 @@ export class TableResizeCommon extends TableDomSelector {
     }
   }
 
-  async updateTableCol(left: number) {
+  updateTableCol(left: number) {
     if (!this.tableBlot || this.colIndex === -1) return;
     const resultX = this.dragXCommon.limitRange(this.tableBlot, left, true);
     const cols = this.tableBlot.getCols();
@@ -179,7 +179,7 @@ export class TableResizeCommon extends TableDomSelector {
     if (needUpdate) {
       const tableWidth = this.tableBlot.domNode.getBoundingClientRect().width;
       if (isFull) {
-        // if full table and percentage width is larger than 100%. check if convert to fixed px
+        // if full table and percentage width is larger than 100%, normalize to 100%
         let resultWidth = 0;
         const skipColIndex = new Set(updateInfo.map(({ index, width }) => {
           resultWidth += width;
@@ -191,21 +191,19 @@ export class TableResizeCommon extends TableDomSelector {
         }
 
         if (resultWidth > 100) {
-          if (!await createConfirmDialog({
-            message: this.tableModule.options.texts.perWidthInsufficient,
-            confirm: this.tableModule.options.texts.confirmText,
-            cancel: this.tableModule.options.texts.cancelText,
-          })) {
-            return;
-          }
-          this.tableBlot.cancelFull();
-          isFull = false;
+          // Normalize all widths proportionally to fit within 100%
+          const scaleFactor = 100 / resultWidth;
           for (const [i, info] of updateInfo.entries()) {
-            const { width, index } = info;
             updateInfo[i] = {
-              index,
-              width: width / 100 * tableWidth,
+              index: info.index,
+              width: info.width * scaleFactor,
             };
+          }
+          // Also need to scale all other columns
+          for (const [index, col] of cols.entries()) {
+            if (!skipColIndex.has(index)) {
+              cols[index].width = `${col.width * scaleFactor}%`;
+            }
           }
         }
       }

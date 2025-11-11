@@ -564,7 +564,7 @@ declare class TableResizeCommon extends TableDomSelector {
   calculateColDragRangeByFull(): void;
   calculateColDragRangeByFixed(): void;
   calculateColDragRange(): void;
-  updateTableCol(left: number): Promise<void>;
+  updateTableCol(left: number): void;
   findDragRowIndex(_rows: TableRowFormat[]): number;
   calculateRowDragRange(): void;
   updateTableRow(top: number): void;
