@@ -146,16 +146,17 @@ export class TableResizeCommon extends TableDomSelector {
         // the last col can't magnify. control last but one minus to magnify last col
         if (cols[this.colIndex + 1]) {
           const totalWidthNextPre = oldWidthPre + cols[this.colIndex + 1].width;
-          pre = Math.min(totalWidthNextPre - tableUpSize.colMinWidthPre, pre);
 
+          // Calculate other columns' total width
           const otherColsWidth = cols.reduce((sum, col, idx) =>
-            (idx !== this.colIndex && idx !== this.colIndex + 1) ? sum + col.width : sum, 0
-          );
-          const maxAllowedPre = Math.min(pre, 100 - tableUpSize.colMinWidthPre - otherColsWidth);
+            (idx !== this.colIndex && idx !== this.colIndex + 1) ? sum + col.width : sum, 0);
 
-          if (maxAllowedPre < pre) {
-            pre = maxAllowedPre;
-          }
+          // Ensure pre doesn't exceed limits
+          // 1. Cannot exceed total of current + next column minus minimum
+          // 2. Cannot make total width exceed 100% (with margin for floating point errors)
+          const maxPreFromNextCol = totalWidthNextPre - tableUpSize.colMinWidthPre;
+          const maxPreFromTotal = 100 - tableUpSize.colMinWidthPre - otherColsWidth - 0.001;
+          pre = Math.min(pre, maxPreFromNextCol, maxPreFromTotal);
 
           needUpdate = true;
           updateInfo.push(
